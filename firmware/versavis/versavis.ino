@@ -22,11 +22,15 @@
 #include <Timer.h>
 #include <helper.h>
 
-static void resetCb(const std_msgs::Bool & /*msg*/) { NVIC_SystemReset(); }
+static void resetCb(const std_msgs::Bool & /*msg*/) {
+  NVIC_SystemReset();
+}
 
 #ifdef ILLUMINATION_MODULE
 static void pwmCb(const std_msgs::UInt8 &msg) {
   analogWrite(ILLUMINATION_PWM_PIN, msg.data);
+  Serial.println(msg.data);
+  Serial1.println(msg.data);
 }
 #endif
 
@@ -71,7 +75,7 @@ Camera cam2(&nh, CAM2_TOPIC, CAM2_RATE, timer_cam2, CAM2_TYPE, CAM2_TRIGGER_PIN,
 void setup() {
   DEBUG_INIT(115200);
 
-/* ----- Define pins and initialize. ----- */
+  /* ----- Define pins and initialize. ----- */
 #ifdef ADD_TRIGGERS
   pinMode(ADDITIONAL_TEST_PIN, OUTPUT);
   digitalWrite(ADDITIONAL_TEST_PIN, LOW);
@@ -86,7 +90,7 @@ void setup() {
 
   delay(1000);
 
-/* ----- ROS ----- */
+  /* ----- ROS ----- */
 #ifndef DEBUG
   nh.getHardware()->setBaud(250000);
   nh.initNode();
@@ -124,20 +128,20 @@ void setup() {
   /* -----  Declare timers ----- */
   // Enable TCC1 and TCC2 timers.
   REG_GCLK_CLKCTRL = static_cast<uint16_t>(
-      GCLK_CLKCTRL_CLKEN | GCLK_CLKCTRL_GEN_GCLK0 | GCLK_CLKCTRL_ID_TCC0_TCC1);
+                       GCLK_CLKCTRL_CLKEN | GCLK_CLKCTRL_GEN_GCLK0 | GCLK_CLKCTRL_ID_TCC0_TCC1);
   while (GCLK->STATUS.bit.SYNCBUSY == 1) {
     ; // wait for sync
   }
   // Enable TCC2 (not used) and TC3 timers.
   REG_GCLK_CLKCTRL = static_cast<uint16_t>(
-      GCLK_CLKCTRL_CLKEN | GCLK_CLKCTRL_GEN_GCLK0 | GCLK_CLKCTRL_ID_TCC2_TC3);
+                       GCLK_CLKCTRL_CLKEN | GCLK_CLKCTRL_GEN_GCLK0 | GCLK_CLKCTRL_ID_TCC2_TC3);
   while (GCLK->STATUS.bit.SYNCBUSY == 1) {
     ; // wait for sync
   }
 
   // Enable TC4 (not used) and TC5 timers.
   REG_GCLK_CLKCTRL = static_cast<uint16_t>(
-      GCLK_CLKCTRL_CLKEN | GCLK_CLKCTRL_GEN_GCLK0 | GCLK_CLKCTRL_ID_TC4_TC5);
+                       GCLK_CLKCTRL_CLKEN | GCLK_CLKCTRL_GEN_GCLK0 | GCLK_CLKCTRL_ID_TC4_TC5);
   while (GCLK->STATUS.bit.SYNCBUSY == 1) {
     ; // wait for sync
   }
@@ -167,13 +171,22 @@ void setup() {
   interrupts();
 
   DEBUG_PRINTLN(F("Main: Setup done."));
+
+  Serial.begin(250000);
+  Serial1.begin(250000);
+
 }
+
+int message = 133;
 
 void loop() {
   cam0.publish();
   cam1.publish();
   cam2.publish();
   imu.publish();
+  //
+  //  Serial.println(message);
+  //  Serial1.println(message);
 
 #ifndef DEBUG
   nh.spinOnce();
