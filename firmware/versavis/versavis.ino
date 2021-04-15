@@ -22,6 +22,9 @@
 #include <Timer.h>
 #include <helper.h>
 
+int message = 0;
+boolean new_message = false;
+
 static void resetCb(const std_msgs::Bool & /*msg*/) {
   NVIC_SystemReset();
 }
@@ -29,8 +32,8 @@ static void resetCb(const std_msgs::Bool & /*msg*/) {
 #ifdef ILLUMINATION_MODULE
 static void pwmCb(const std_msgs::UInt8 &msg) {
   analogWrite(ILLUMINATION_PWM_PIN, msg.data);
-  Serial.println(msg.data);
-  Serial1.println(msg.data);
+  message = msg.data;
+  new_message = true;
 }
 #endif
 
@@ -177,16 +180,17 @@ void setup() {
 
 }
 
-int message = 133;
-
 void loop() {
   cam0.publish();
   cam1.publish();
   cam2.publish();
   imu.publish();
-  //
-  //  Serial.println(message);
-  //  Serial1.println(message);
+
+  if (new_message == true){
+    Serial.println(message);
+    Serial1.println(message);
+    new_message = false;
+  }
 
 #ifndef DEBUG
   nh.spinOnce();
